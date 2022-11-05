@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
 
 package com.darekbx.lifetimememo.screens.memo.ui
 
@@ -8,13 +8,17 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.darekbx.lifetimememo.commonui.CancelIcon
+import com.darekbx.lifetimememo.commonui.SaveIcon
 import com.darekbx.lifetimememo.commonui.theme.Paddings
 import com.darekbx.lifetimememo.screens.category.model.Category
 import com.darekbx.lifetimememo.screens.category.viewmodel.CategoryViewModel
+import com.darekbx.lifetimememo.screens.memos.model.Memo
 import com.darekbx.lifetimememo.screens.memos.viewmodel.MemosViewModel
 
 /**
@@ -29,82 +33,135 @@ fun MemoScreen(
     onClose: () -> Unit
 ) {
     var title by remember { mutableStateOf("") }
-    var subtitle by remember { mutableStateOf("Pid: $parentId") }
+    var titleValid by remember { mutableStateOf(true) }
+    var subtitle by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var categoryId by remember { mutableStateOf("") }
+    var categoryValid by remember { mutableStateOf(true) }
+    var important by remember { mutableStateOf(false) }
+    var sticked by remember { mutableStateOf(false) }
 
-    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
-        if (!memoId.isNullOrEmpty() && memoId != "null") {
-            Text(
-                modifier = Modifier.padding(16.dp),
-                text = "TODO: Not implemented!",
-                color = Color.Red
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(text = "Container") },
+                actions = {
+                    IconButton(onClick = { onClose() }) { CancelIcon() }
+                    IconButton(onClick = {
+                        titleValid = true
+                        categoryValid = true
+                        if (title.isBlank()) {
+                            titleValid = false
+                        } else if (categoryId.isEmpty()) {
+                            categoryValid = false
+                        } else {
+                            memosViewModel.add(
+                                title,
+                                subtitle,
+                                description,
+                                categoryId,
+                                computeFlag(important, sticked),
+                                parentId = parentId
+                            )
+                            onClose()
+                        }
+                    }) { SaveIcon() }
+                }
             )
-        }
-        Column {
-            TitleField(title) { title = it }
-            SubtitleField(subtitle) { subtitle = it }
-            DescriptionField(description) { description = it }
-            CategorySelection { category -> categoryId = category.uid }
-            Text(
-                modifier = Modifier.padding(16.dp),
-                text = "TODO: datetime, flag, reminder"
-            )
-            Text(
-                modifier = Modifier.padding(16.dp),
-                text = "TODO: Cancel/Save button in appbar??"
-            )
-        }
-        ButtonsRow(
-            onCancel = { onClose() },
-            onSave = {
-                memosViewModel.add(
-                    title,
-                    subtitle,
-                    description,
-                    categoryId,
-                    parentId = parentId
+        },
+        content = { padding ->
+            Column(
+                Modifier
+                    .padding(padding)
+                    .padding(top = 8.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Top
+            ) {
+                TitleField(title, titleValid) { title = it }
+                SubtitleField(subtitle) { subtitle = it }
+                DescriptionField(description) { description = it }
+                CategorySelection(categoryValid = categoryValid) { category ->
+                    categoryId = category.uid
+                }
+                FlagsRow(
+                    important,
+                    sticked,
+                    importantChanged = {
+                        important = it
+                        if (important) {
+                            sticked = false
+                        }
+                    },
+                    stickedChanged = {
+                        sticked = it
+                        if (sticked) {
+                            important = false
+                        }
+                    }
                 )
-                onClose()
+
+                Text(
+                    modifier = Modifier.padding(16.dp),
+                    text = "TODO: location, datetime, reminder"
+                )
             }
-        )
+        }
+    )
+}
+
+private fun computeFlag(important: Boolean, sticked: Boolean): Int? {
+    return when {
+        important -> Memo.Flag.IMPORTANT.value
+        sticked -> Memo.Flag.STICKED.value
+        else -> null
     }
 }
 
 @Composable
-private fun ButtonsRow(
-    onCancel: () -> Unit = { },
-    onSave: () -> Unit = { }
+private fun FlagsRow(
+    isImportant: Boolean,
+    isSticked: Boolean,
+    importantChanged: (Boolean) -> Unit,
+    stickedChanged: (Boolean) -> Unit
 ) {
-    Row(Modifier.padding(Paddings.Big)) {
-        Button(modifier = Modifier
-            .fillMaxWidth(0.5F),
-            onClick = { onCancel() }) {
-            Text(text = "Cancel")
+    Row(
+        modifier = Modifier.padding(start = 4.dp, top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            modifier = Modifier.padding(end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Checkbox(checked = isImportant, onCheckedChange = importantChanged)
+            Text(text = "Important")
         }
-
-        Button(
-            modifier = Modifier
-                .fillMaxWidth(1F)
-                .padding(start = Paddings.Big),
-            onClick = { onSave() }) {
-            Text(text = "Save")
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Checkbox(checked = isSticked, onCheckedChange = stickedChanged)
+            Text(text = "Sticked")
         }
     }
 }
 
 @Composable
-private fun DescriptionField(value: String, onChanged: (String) -> Unit) {
+private fun TitleField(
+    value: String,
+    isValid: Boolean,
+    onChanged: (String) -> Unit
+) {
     TextField(
         modifier = Modifier
             .inputPadding()
-            .fillMaxWidth()
-            .height(150.dp),
+            .fillMaxWidth(),
         value = value,
+        isError = !isValid,
         onValueChange = { onChanged(it) },
-        singleLine = false,
-        maxLines = 6,
-        label = { Text("Description") }
+        singleLine = true,
+        label = { Text("Title") }
     )
 }
 
@@ -124,15 +181,17 @@ private fun SubtitleField(value: String, onChanged: (String) -> Unit) {
 }
 
 @Composable
-private fun TitleField(value: String, onChanged: (String) -> Unit) {
+private fun DescriptionField(value: String, onChanged: (String) -> Unit) {
     TextField(
         modifier = Modifier
             .inputPadding()
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .height(150.dp),
         value = value,
         onValueChange = { onChanged(it) },
-        singleLine = true,
-        label = { Text("Title") }
+        singleLine = false,
+        maxLines = 6,
+        label = { Text("Description") }
     )
 }
 
@@ -142,6 +201,7 @@ private fun Modifier.inputPadding() =
 @Composable
 fun CategorySelection(
     categoryViewModel: CategoryViewModel = hiltViewModel(),
+    categoryValid: Boolean,
     selectedCategory: (Category) -> Unit = { }
 ) {
     val categories by categoryViewModel.categories.observeAsState()
@@ -152,6 +212,7 @@ fun CategorySelection(
             Column {
                 OutlinedTextField(
                     value = text.value,
+                    isError = !categoryValid,
                     onValueChange = { text.value = it },
                     label = { Text(text = "Category") },
                     modifier = Modifier.fillMaxWidth()

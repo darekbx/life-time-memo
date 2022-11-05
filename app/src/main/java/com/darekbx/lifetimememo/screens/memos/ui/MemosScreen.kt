@@ -1,26 +1,31 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package com.darekbx.lifetimememo.screens.memos.ui
 
-import androidx.compose.foundation.background
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.Star
-import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -42,41 +47,33 @@ fun MemosScreen(
     onAddMemoClick: (parentId: String?) -> Unit,
     onAddContainerClick: (parentId: String?) -> Unit,
 ) {
-    val elements by memosViewModel.elements(parentId).observeAsState()
+    val context = LocalContext.current
+    val elements by memosViewModel.elements(parentId).observeAsState(emptyList())
     val uiState by memosViewModel.uiState.observeAsState()
+    var path by remember { mutableStateOf<List<String>>(emptyList()) }
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        elements?.let {
-            ElementsList(it, onContainerClick, onMemoClick)
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Bottom,
-            horizontalAlignment = Alignment.End
-        ) {
-            ExtendedFloatingActionButton(
-                onClick = { onAddMemoClick(parentId) },
-                icon = { Icon(imageVector = Icons.Default.Add, contentDescription = "Add memo") },
-                text = { Text(text = "Memo") },
-                shape = CircleShape
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            ExtendedFloatingActionButton(
-                onClick = { onAddContainerClick(parentId) },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add container"
-                    )
-                },
-                text = { Text(text = "Container") },
-                shape = CircleShape
+    LaunchedEffect(parentId) {
+        path = memosViewModel.getPath(parentId)
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column {
+            CurrentLocation(path)
+            ElementsList(
+                elements,
+                onContainerClick,
+                onMemoClick,
+                onContainerLongPress = { container ->
+                    if (container.childrenCount > 0) {
+                        CantDeleteContainerToast(context)
+                    } else {
+                        memosViewModel.delete(container)
+                    }
+                }
             )
         }
+
+        ActionButtons(parentId, onAddMemoClick, onAddContainerClick)
 
         if (uiState is MemosUiState.InProgress) {
             ProgressIndicator()
@@ -85,10 +82,70 @@ fun MemosScreen(
 }
 
 @Composable
+private fun ActionButtons(
+    parentId: String?,
+    onAddMemoClick: (parentId: String?) -> Unit,
+    onAddContainerClick: (parentId: String?) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Bottom,
+        horizontalAlignment = Alignment.End
+    ) {
+        Text(text = "TODO: ability to delete and edit")
+
+        ExtendedFloatingActionButton(
+            onClick = { onAddMemoClick(parentId) },
+            icon = { Icon(imageVector = Icons.Default.Add, contentDescription = "Add") },
+            text = { Text(text = "Memo") },
+            shape = CircleShape
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        ExtendedFloatingActionButton(
+            onClick = { onAddContainerClick(parentId) },
+            icon = { Icon(imageVector = Icons.Default.Add, contentDescription = "Add") },
+            text = { Text(text = "Container") },
+            shape = CircleShape
+        )
+    }
+}
+
+@Composable
+private fun CurrentLocation(path: List<String>) {
+    Card(
+        modifier = Modifier
+            .padding(start = 12.dp, top = 12.dp, end = 12.dp)
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = DarkGreen.copy(alpha = 0.6F))
+    ) {
+        val annotetedString = buildAnnotatedString {
+            when {
+                path.isEmpty() -> append("")
+                path.size == 1 -> append("\\${path.first()}")
+                else -> {
+                    append("\\${path.dropLast(1).joinToString("\\")}")
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.ExtraBold)) {
+                        append("\\${path.last()}")
+                    }
+                }
+            }
+        }
+        Text(
+            modifier = Modifier.padding(8.dp),
+            text = annotetedString,
+            fontSize = 13.sp
+        )
+    }
+}
+
+@Composable
 fun ElementsList(
     elements: List<Any>,
-    onContainerClick: (id: String?) -> Unit = { },
-    onMemoClick: (id: String?) -> Unit = { }
+    onContainerClick: (id: String) -> Unit = { },
+    onMemoClick: (id: String) -> Unit = { },
+    onContainerLongPress: (container: Container) -> Unit = { }
 ) {
     LazyColumn(
         Modifier
@@ -98,7 +155,10 @@ fun ElementsList(
         items(elements) { item ->
             when (item) {
                 is Container -> ContainerCard(
-                    Modifier.clickable { onContainerClick(item.uid) },
+                    Modifier.combinedClickable(
+                        onClick = { onContainerClick(item.uid) },
+                        onLongClick = { onContainerLongPress(item) }
+                    ),
                     item
                 )
                 is Memo -> MemoCard(Modifier.clickable { onMemoClick(item.uid) }, item)
@@ -139,7 +199,7 @@ fun ContainerCard(modifier: Modifier, container: Container) {
                         colors = listOf(Color.White, Color.White.copy(alpha = 0.25F))
                     )
                 }
-                if (container.subtitle != null) {
+                if (container.subtitle != null && container.subtitle.isNotBlank()) {
                     Text(
                         modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 4.dp),
                         text = container.subtitle,
@@ -176,9 +236,9 @@ fun MemoCard(modifier: Modifier, memo: Memo) {
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
-                    Row(Modifier.padding(top = 4.dp)) {
+                    Row {
                         if (memo.flag == Memo.Flag.IMPORTANT.value) {
-                            WarningFlag()
+                            ImportantFlag()
                         }
                         if (memo.flag == Memo.Flag.STICKED.value) {
                             StickedFlag()
@@ -222,12 +282,13 @@ fun MemoCard(modifier: Modifier, memo: Memo) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 8.dp, top = 4.dp, end = 8.dp, bottom = 8.dp),
+                    .padding(start = 8.dp, top = 4.dp, end = 8.dp, bottom = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 if (memo.hasSubtitle) {
                     Text(
+                        modifier = Modifier.padding(bottom = 4.dp),
                         text = memo.subtitle!!,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Normal
@@ -241,17 +302,25 @@ fun MemoCard(modifier: Modifier, memo: Memo) {
 @Composable
 private fun StickedFlag() {
     Icon(
-        modifier = Modifier.size(14.dp),
-        imageVector = Icons.Outlined.Star,
-        contentDescription = "W"
+        modifier = Modifier
+            .padding(top = 4.dp)
+            .size(16.dp),
+        painter = painterResource(id = R.drawable.ic_pin),
+        contentDescription = "W",
+        tint = Orange
     )
 }
 
 @Composable
-private fun WarningFlag() {
-    Icon(
-        modifier = Modifier.size(14.dp),
-        imageVector = Icons.Outlined.Warning,
-        contentDescription = "W"
+private fun ImportantFlag() {
+    Text(
+        text = "!",
+        fontSize = 17.sp,
+        fontWeight = FontWeight.ExtraBold,
+        color = Red
     )
+}
+
+private fun CantDeleteContainerToast(context: Context) {
+    Toast.makeText(context, "Cannot delete not empty Container!", Toast.LENGTH_LONG).show()
 }

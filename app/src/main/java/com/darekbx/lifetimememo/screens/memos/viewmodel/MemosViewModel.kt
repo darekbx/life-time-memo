@@ -1,5 +1,6 @@
 package com.darekbx.lifetimememo.screens.memos.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.*
 import com.darekbx.lifetimememo.screens.memos.MemosUiState
 import com.darekbx.lifetimememo.screens.memos.model.Container
@@ -20,6 +21,19 @@ class MemosViewModel @Inject constructor(
     val uiState: LiveData<MemosUiState>
         get() = _uiState
 
+    suspend fun getPath(parentId: String?): List<String> {
+        val path = memosRepository.getPath(parentId)
+        return path.reversed()
+    }
+
+    fun getContainer(parentId: String?): LiveData<Container> {
+        if (parentId != null && parentId.isNotBlank() && parentId != "null") {
+            return memosRepository.getContainer(parentId).asLiveData()
+        } else {
+            return liveData { }
+        }
+    }
+
     fun elements(parentId: String?): LiveData<List<Any>> =
         memosRepository.elements(containerId = parentId)
             .onEach { _uiState.value = MemosUiState.Done }
@@ -30,6 +44,7 @@ class MemosViewModel @Inject constructor(
         shortInfo: String,
         description: String,
         categoryId: String,
+        flag: Int?,
         parentId: String? = null
     ) {
         viewModelScope.launch {
@@ -42,7 +57,8 @@ class MemosViewModel @Inject constructor(
                     System.currentTimeMillis(),
                     categoryId,
                     shortInfo,
-                    description
+                    description,
+                    flag = flag
                 )
             )
         }
@@ -63,6 +79,12 @@ class MemosViewModel @Inject constructor(
                     subtitle
                 )
             )
+        }
+    }
+
+    fun delete(container: Container) {
+        viewModelScope.launch {
+            memosRepository.delete(container)
         }
     }
 

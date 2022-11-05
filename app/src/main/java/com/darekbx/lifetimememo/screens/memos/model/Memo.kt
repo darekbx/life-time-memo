@@ -25,8 +25,8 @@ class Memo(
     lateinit var categoryName: String
 
     var hasLocation = false
-    var hasDescription = description != null
-    var hasSubtitle = subtitle != null
+    var hasDescription = description != null && description.isNotBlank()
+    var hasSubtitle = subtitle != null && subtitle.isNotBlank()
     var hasLink = link != null
 
     companion object {

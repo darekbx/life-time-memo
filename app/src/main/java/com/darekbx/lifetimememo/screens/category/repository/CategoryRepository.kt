@@ -27,7 +27,7 @@ class CategoryRepository @Inject constructor(
     }
 
     suspend fun delete(uid: String) {
-        memoDao.delete(uid)
+        memoDao.deleteCategory(uid)
     }
 
     private fun mapToDomain(result: List<ExtendedCategoryDto>) =

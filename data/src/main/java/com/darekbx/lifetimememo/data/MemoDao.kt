@@ -24,6 +24,12 @@ interface MemoDao {
     @Query("SELECT * FROM container WHERE parent_uid IS NULL")
     fun containers(): Flow<List<ContainerDto>>
 
+    @Query("SELECT * FROM container WHERE uid = :parentId")
+    fun container(parentId: String): Flow<ContainerDto>
+
+    @Query("SELECT * FROM container WHERE uid = :parentId")
+    suspend fun containerSync(parentId: String): ContainerDto?
+
     @Query("SELECT * FROM container WHERE parent_uid = :containerId")
     fun containers(containerId: String): Flow<List<ContainerDto>>
 
@@ -43,7 +49,10 @@ interface MemoDao {
     suspend fun add(categoryDto: CategoryDto): Long
 
     @Query("DELETE FROM category WHERE uid = :uid")
-    suspend fun delete(uid: String)
+    suspend fun deleteCategory(uid: String)
+
+    @Query("DELETE FROM container WHERE uid = :uid")
+    suspend fun deleteContainer(uid: String)
 
     @Insert
     fun add(locationDto: LocationDto): Long

@@ -18,6 +18,24 @@ class MemosRepository @Inject constructor(
     private val memoDao: MemoDao
 ) {
 
+    suspend fun getPath(
+        parentId: String?,
+        path: MutableList<String> = mutableListOf()
+    ): MutableList<String> {
+        if (parentId != null && parentId != "null") {
+            val container = memoDao.containerSync(parentId)
+            if (container != null) {
+                path.add(container.title)
+                return getPath(container.parentUid, path)
+            }
+        }
+        return (path + "Root").toMutableList()
+    }
+
+    fun getContainer(parentId: String): Flow<Container> {
+        return memoDao.container(parentId).map { it.toDomain() }
+    }
+
     fun elements(containerId: String?): Flow<List<Any>> {
         val memosSource = memoDao
             .memos(containerId)
@@ -61,8 +79,8 @@ class MemosRepository @Inject constructor(
         }
     }
 
-    suspend fun delete(uid: String) {
-        memoDao.delete(uid)
+    suspend fun delete(container: Container) {
+        memoDao.deleteContainer(container.uid)
     }
 
     private fun Memo.mapToDto(): MemoDto {
