@@ -25,7 +25,11 @@ fun MemoNavHost(
     ) {
         composable(route = LogIn.route) {
             LoginScreen(
-                authorized = { navController.navigateSingleTopTo("${Memos.rawRoute}/null") }
+                authorized = {
+                    navController.navigate("${Memos.rawRoute}/null") {
+                        popUpTo(0 /* clear root */)
+                    }
+                }
             )
         }
 
@@ -38,8 +42,8 @@ fun MemoNavHost(
                 parentId = parentId,
                 onMemoClick = { memoId -> navController.navigateSingleTopTo("${Memo.route}/$memoId") },
                 onContainerClick = { containerId -> navController.navigate("${Memos.rawRoute}/$containerId") },
-                onAddMemoClick = { id -> navController.navigateSingleTopTo("${Memo.route}/null/$id") },
-                onAddContainerClick = { id -> navController.navigateSingleTopTo("${Container.route}/$id")  }
+                onAddMemoClick = { id -> navController.navigate("${Memo.route}/null/$id") },
+                onAddContainerClick = { id -> navController.navigate("${Container.route}/$id") }
             )
         }
 
@@ -61,8 +65,7 @@ fun MemoNavHost(
                 val memoId = args.getString(Memo.memoIdArg)
                 val parentId = args.getString(Memo.parentIdArg)
                 MemoScreen(memoId = memoId, parentId = parentId) {
-                    navController.navigateSingleTopTo("${Memos.rawRoute}/$parentId")
-                    navController.navigateSingleTopTo("${Memos.rawRoute}/$parentId")
+                    navController.popBackStack()
                 }
             }
         }
@@ -74,7 +77,7 @@ fun MemoNavHost(
             navBackStackEntry.arguments?.let { args ->
                 val parentId = args.getString(Container.parentIdArg)
                 ContainerScreen(parentId = parentId) {
-                    navController.navigateSingleTopTo("${Memos.rawRoute}/$parentId")
+                    navController.popBackStack()
                 }
             }
         }

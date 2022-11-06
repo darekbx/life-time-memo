@@ -29,7 +29,7 @@ class MemosRepository @Inject constructor(
                 return getPath(container.parentUid, path)
             }
         }
-        return (path + "Root").toMutableList()
+        return path
     }
 
     fun getContainer(parentId: String): Flow<Container> {
@@ -81,6 +81,10 @@ class MemosRepository @Inject constructor(
 
     suspend fun delete(container: Container) {
         memoDao.deleteContainer(container.uid)
+    }
+
+    suspend fun delete(memo: Memo) {
+        memoDao.deleteMemo(memo.uid)
     }
 
     private fun Memo.mapToDto(): MemoDto {

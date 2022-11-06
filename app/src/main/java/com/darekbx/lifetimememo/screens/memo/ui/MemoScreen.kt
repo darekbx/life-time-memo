@@ -11,6 +11,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.darekbx.lifetimememo.commonui.CancelIcon
@@ -36,10 +37,13 @@ fun MemoScreen(
     var titleValid by remember { mutableStateOf(true) }
     var subtitle by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    var link by remember { mutableStateOf("") }
     var categoryId by remember { mutableStateOf("") }
     var categoryValid by remember { mutableStateOf(true) }
     var important by remember { mutableStateOf(false) }
     var sticked by remember { mutableStateOf(false) }
+
+    val parentContainer = memosViewModel.getContainer(parentId).observeAsState()
 
     Scaffold(
         topBar = {
@@ -61,6 +65,7 @@ fun MemoScreen(
                                 description,
                                 categoryId,
                                 computeFlag(important, sticked),
+                                link,
                                 parentId = parentId
                             )
                             onClose()
@@ -77,9 +82,17 @@ fun MemoScreen(
                     .fillMaxSize(),
                 verticalArrangement = Arrangement.Top
             ) {
+                Row(modifier = Modifier.padding(start = 16.dp)) {
+                    Text(text = "Parent: ")
+                    Text(
+                        text = "${parentContainer.value?.title ?: "Root"}",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 TitleField(title, titleValid) { title = it }
                 SubtitleField(subtitle) { subtitle = it }
                 DescriptionField(description) { description = it }
+                LinkField(link) { link = it }
                 CategorySelection(categoryValid = categoryValid) { category ->
                     categoryId = category.uid
                 }
@@ -162,6 +175,22 @@ private fun TitleField(
         onValueChange = { onChanged(it) },
         singleLine = true,
         label = { Text("Title") }
+    )
+}
+
+@Composable
+private fun LinkField(
+    value: String,
+    onChanged: (String) -> Unit
+) {
+    TextField(
+        modifier = Modifier
+            .inputPadding()
+            .fillMaxWidth(),
+        value = value,
+        onValueChange = { onChanged(it) },
+        singleLine = true,
+        label = { Text("Link (url)") }
     )
 }
 

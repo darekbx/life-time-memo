@@ -5,7 +5,6 @@ package com.darekbx.lifetimememo.screens.memos.ui
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -51,6 +50,8 @@ fun MemosScreen(
     val elements by memosViewModel.elements(parentId).observeAsState(emptyList())
     val uiState by memosViewModel.uiState.observeAsState()
     var path by remember { mutableStateOf<List<String>>(emptyList()) }
+    var confirmationDialogShow by remember { mutableStateOf(false) }
+    var memoToDelete by remember { mutableStateOf<Memo?>(null) }
 
     LaunchedEffect(parentId) {
         path = memosViewModel.getPath(parentId)
@@ -63,9 +64,13 @@ fun MemosScreen(
                 elements,
                 onContainerClick,
                 onMemoClick,
+                onMemoLongPress = { memo ->
+                    memoToDelete = memo
+                    confirmationDialogShow = true
+                },
                 onContainerLongPress = { container ->
                     if (container.childrenCount > 0) {
-                        CantDeleteContainerToast(context)
+                        cantDeleteContainerToast(context)
                     } else {
                         memosViewModel.delete(container)
                     }
@@ -78,7 +83,34 @@ fun MemosScreen(
         if (uiState is MemosUiState.InProgress) {
             ProgressIndicator()
         }
+
+        if (confirmationDialogShow && memoToDelete != null) {
+            DeleteConfirmationDialog(memoToDelete, memosViewModel) {
+                confirmationDialogShow = false
+            }
+        }
     }
+}
+
+@Composable
+private fun DeleteConfirmationDialog(
+    memoToDelete: Memo?,
+    memosViewModel: MemosViewModel,
+    onDismiss: () -> Unit = { }
+) {
+    val message = buildAnnotatedString {
+        append("Delete ")
+        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+            append(memoToDelete!!.title)
+        }
+        append(" memo?")
+    }
+    ConfirmationDialog(
+        message = message,
+        confirmButtonText = "Delete",
+        onDismiss = { onDismiss() },
+        onConfirm = { memosViewModel.delete(memoToDelete!!) }
+    )
 }
 
 @Composable
@@ -94,7 +126,7 @@ private fun ActionButtons(
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.End
     ) {
-        Text(text = "TODO: ability to delete and edit")
+        Text(text = "TODO: ability to edit memo")
 
         ExtendedFloatingActionButton(
             onClick = { onAddMemoClick(parentId) },
@@ -122,7 +154,7 @@ private fun CurrentLocation(path: List<String>) {
     ) {
         val annotetedString = buildAnnotatedString {
             when {
-                path.isEmpty() -> append("")
+                path.isEmpty() -> append("\\")
                 path.size == 1 -> append("\\${path.first()}")
                 else -> {
                     append("\\${path.dropLast(1).joinToString("\\")}")
@@ -145,6 +177,7 @@ fun ElementsList(
     elements: List<Any>,
     onContainerClick: (id: String) -> Unit = { },
     onMemoClick: (id: String) -> Unit = { },
+    onMemoLongPress: (Memo) -> Unit = { },
     onContainerLongPress: (container: Container) -> Unit = { }
 ) {
     LazyColumn(
@@ -161,7 +194,13 @@ fun ElementsList(
                     ),
                     item
                 )
-                is Memo -> MemoCard(Modifier.clickable { onMemoClick(item.uid) }, item)
+                is Memo -> MemoCard(
+                    Modifier.combinedClickable(
+                        onClick = { onMemoClick(item.uid) },
+                        onLongClick = { onMemoLongPress(item) }
+                    ),
+                    item
+                )
             }
         }
     }
@@ -321,6 +360,6 @@ private fun ImportantFlag() {
     )
 }
 
-private fun CantDeleteContainerToast(context: Context) {
+private fun cantDeleteContainerToast(context: Context) {
     Toast.makeText(context, "Cannot delete not empty Container!", Toast.LENGTH_LONG).show()
 }

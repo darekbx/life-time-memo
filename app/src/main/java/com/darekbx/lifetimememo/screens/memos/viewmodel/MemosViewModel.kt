@@ -1,6 +1,5 @@
 package com.darekbx.lifetimememo.screens.memos.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.*
 import com.darekbx.lifetimememo.screens.memos.MemosUiState
 import com.darekbx.lifetimememo.screens.memos.model.Container
@@ -45,6 +44,7 @@ class MemosViewModel @Inject constructor(
         description: String,
         categoryId: String,
         flag: Int?,
+        link: String? = null,
         parentId: String? = null
     ) {
         viewModelScope.launch {
@@ -58,6 +58,7 @@ class MemosViewModel @Inject constructor(
                     categoryId,
                     shortInfo,
                     description,
+                    link,
                     flag = flag
                 )
             )
@@ -85,6 +86,11 @@ class MemosViewModel @Inject constructor(
     fun delete(container: Container) {
         viewModelScope.launch {
             memosRepository.delete(container)
+        }
+    }
+    fun delete(memo: Memo) {
+        viewModelScope.launch {
+            memosRepository.delete(memo)
         }
     }
 

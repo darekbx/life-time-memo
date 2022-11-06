@@ -54,6 +54,9 @@ interface MemoDao {
     @Query("DELETE FROM container WHERE uid = :uid")
     suspend fun deleteContainer(uid: String)
 
+    @Query("DELETE FROM memo WHERE uid = :uid")
+    suspend fun deleteMemo(uid: String)
+
     @Insert
     fun add(locationDto: LocationDto): Long
 

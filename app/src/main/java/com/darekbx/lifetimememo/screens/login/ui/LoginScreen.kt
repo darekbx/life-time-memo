@@ -21,8 +21,10 @@ import com.darekbx.lifetimememo.commonui.theme.*
 
 @Composable
 fun LoginScreen(authorized: () -> Unit) {
-    Button(onClick = { authorized() }) {
-        Text(text = "Login screen")
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Button(onClick = { authorized() }) {
+            Text(text = "Open")
+        }
     }
 }
 
