@@ -10,6 +10,7 @@ import com.darekbx.lifetimememo.screens.memos.model.Memo.Companion.toDomain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -34,6 +35,13 @@ class MemosRepository @Inject constructor(
 
     fun getContainer(parentId: String): Flow<Container> {
         return memoDao.container(parentId).map { it.toDomain() }
+    }
+
+    suspend fun getMemo(id: String?): Memo? {
+        if (id == null) {
+            return null
+        }
+        return memoDao.getMemo(id).toDomain()
     }
 
     fun elements(containerId: String?): Flow<List<Any>> {
@@ -70,6 +78,11 @@ class MemosRepository @Inject constructor(
     suspend fun add(memo: Memo) {
         withContext(Dispatchers.IO) {
             memoDao.add(memo.mapToDto())
+        }
+    }
+    suspend fun update(memo: Memo) {
+        withContext(Dispatchers.IO) {
+            memoDao.update(memo.mapToDto())
         }
     }
 

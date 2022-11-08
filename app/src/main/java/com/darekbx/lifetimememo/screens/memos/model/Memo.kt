@@ -1,7 +1,6 @@
 package com.darekbx.lifetimememo.screens.memos.model
 
 import com.darekbx.lifetimememo.data.dto.MemoDto
-import com.darekbx.lifetimememo.screens.category.model.Category
 
 class Memo(
     val uid: String,

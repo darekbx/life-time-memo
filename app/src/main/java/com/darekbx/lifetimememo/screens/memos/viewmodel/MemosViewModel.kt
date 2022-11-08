@@ -33,10 +33,42 @@ class MemosViewModel @Inject constructor(
         }
     }
 
+    suspend fun getMemo(id: String?): Memo? {
+        return memosRepository.getMemo(id)
+    }
+
     fun elements(parentId: String?): LiveData<List<Any>> =
         memosRepository.elements(containerId = parentId)
             .onEach { _uiState.value = MemosUiState.Done }
             .asLiveData()
+
+    fun update(
+        memoId: String,
+        title: String,
+        shortInfo: String,
+        description: String,
+        categoryId: String,
+        flag: Int?,
+        link: String? = null
+    ) {
+        viewModelScope.launch {
+            _uiState.value = MemosUiState.InProgress
+            val memo = memosRepository.getMemo(memoId) ?: return@launch
+            memosRepository.update(
+                Memo(
+                    memo.uid,
+                    memo.parentUid,
+                    title,
+                    memo.timestamp,
+                    categoryId,
+                    shortInfo,
+                    description,
+                    link,
+                    flag = flag
+                )
+            )
+        }
+    }
 
     fun add(
         title: String,

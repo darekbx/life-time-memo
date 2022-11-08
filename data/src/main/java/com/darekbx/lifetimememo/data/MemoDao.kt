@@ -3,6 +3,7 @@ package com.darekbx.lifetimememo.data
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import com.darekbx.lifetimememo.data.dto.*
 import kotlinx.coroutines.flow.Flow
 
@@ -45,6 +46,9 @@ interface MemoDao {
     @Query("SELECT * FROM category WHERE uid = :categoryId")
     suspend fun getCategory(categoryId: String): CategoryDto
 
+    @Query("SELECT * FROM memo WHERE uid = :id")
+    suspend fun getMemo(id: String): MemoDto
+
     @Insert
     suspend fun add(categoryDto: CategoryDto): Long
 
@@ -62,6 +66,9 @@ interface MemoDao {
 
     @Insert
     fun add(entryDto: MemoDto): Long
+
+    @Update
+    fun update(entryDto: MemoDto)
 
     @Insert
     fun add(containerDto: ContainerDto): Long

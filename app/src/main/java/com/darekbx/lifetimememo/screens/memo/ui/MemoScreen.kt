@@ -21,6 +21,19 @@ import com.darekbx.lifetimememo.screens.category.model.Category
 import com.darekbx.lifetimememo.screens.category.viewmodel.CategoryViewModel
 import com.darekbx.lifetimememo.screens.memos.model.Memo
 import com.darekbx.lifetimememo.screens.memos.viewmodel.MemosViewModel
+/*
+class MutableMemoState {
+
+    var title = mutableStateOf("")
+    var titleValid = mutableStateOf(true) }
+    var subtitle = mutableStateOf("") }
+    var description = mutableStateOf("") }
+    var link by remember { mutableStateOf("") }
+    var categoryId by remember { mutableStateOf("") }
+    var categoryValid by remember { mutableStateOf(true) }
+    var important by remember { mutableStateOf(false) }
+    var sticked by remember { mutableStateOf(false) }
+}*/
 
 /**
  * @param memoId Id of the memo which should be loaded into view
@@ -45,6 +58,22 @@ fun MemoScreen(
 
     val parentContainer = memosViewModel.getContainer(parentId).observeAsState()
 
+    LaunchedEffect(memoId) {
+        memosViewModel.getMemo(memoId)?.let { loadedMemo ->
+            title = loadedMemo.title
+            loadedMemo.subtitle?.let { subtitle = it }
+            loadedMemo.description?.let { description = it }
+            loadedMemo.link?.let { link = it }
+            loadedMemo.flag?.let { memoFlag ->
+                when (memoFlag) {
+                    Memo.Flag.STICKED.value -> sticked = true
+                    Memo.Flag.IMPORTANT.value -> important = true
+                }
+            }
+            categoryId = loadedMemo.categoryUid
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -59,15 +88,27 @@ fun MemoScreen(
                         } else if (categoryId.isEmpty()) {
                             categoryValid = false
                         } else {
-                            memosViewModel.add(
-                                title,
-                                subtitle,
-                                description,
-                                categoryId,
-                                computeFlag(important, sticked),
-                                link,
-                                parentId = parentId
-                            )
+                            memoId?.let {
+                                memosViewModel.update(
+                                    memoId,
+                                    title,
+                                    subtitle,
+                                    description,
+                                    categoryId,
+                                    computeFlag(important, sticked),
+                                    link
+                                )
+                            } ?: run {
+                                memosViewModel.add(
+                                    title,
+                                    subtitle,
+                                    description,
+                                    categoryId,
+                                    computeFlag(important, sticked),
+                                    link,
+                                    parentId = parentId
+                                )
+                            }
                             onClose()
                         }
                     }) { SaveIcon() }
@@ -85,7 +126,7 @@ fun MemoScreen(
                 Row(modifier = Modifier.padding(start = 16.dp)) {
                     Text(text = "Parent: ")
                     Text(
-                        text = "${parentContainer.value?.title ?: "Root"}",
+                        text = parentContainer.value?.title ?: "Root",
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -93,7 +134,7 @@ fun MemoScreen(
                 SubtitleField(subtitle) { subtitle = it }
                 DescriptionField(description) { description = it }
                 LinkField(link) { link = it }
-                CategorySelection(categoryValid = categoryValid) { category ->
+                CategorySelection(categoryValid = categoryValid, selectedId = categoryId) { category ->
                     categoryId = category.uid
                 }
                 FlagsRow(
@@ -231,11 +272,23 @@ private fun Modifier.inputPadding() =
 fun CategorySelection(
     categoryViewModel: CategoryViewModel = hiltViewModel(),
     categoryValid: Boolean,
+    selectedId: String?,
     selectedCategory: (Category) -> Unit = { }
 ) {
     val categories by categoryViewModel.categories.observeAsState()
     val text = remember { mutableStateOf("") }
     val isOpen = remember { mutableStateOf(false) }
+
+    if (categories != null) {
+        selectedId?.let { selectedCategoryId ->
+            val activeCategory = categories?.firstOrNull { it.uid == selectedCategoryId }
+            if (activeCategory != null) {
+                text.value = activeCategory.name
+                selectedCategory(activeCategory)
+            }
+        }
+    }
+
     categories?.let { categoryList ->
         Box(Modifier.inputPadding()) {
             Column {

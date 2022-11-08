@@ -40,7 +40,7 @@ fun MemoNavHost(
             val parentId = navBackStackEntry.arguments?.getString(Memos.parentIdArg)
             MemosScreen(
                 parentId = parentId,
-                onMemoClick = { memoId -> navController.navigateSingleTopTo("${Memo.route}/$memoId") },
+                onMemoClick = { memoId -> navController.navigateSingleTopTo("${Memo.route}/$memoId/null") },
                 onContainerClick = { containerId -> navController.navigate("${Memos.rawRoute}/$containerId") },
                 onAddMemoClick = { id -> navController.navigate("${Memo.route}/null/$id") },
                 onAddContainerClick = { id -> navController.navigate("${Container.route}/$id") }
