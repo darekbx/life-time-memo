@@ -38,7 +38,7 @@ class MemosRepository @Inject constructor(
     }
 
     suspend fun getMemo(id: String?): Memo? {
-        if (id == null) {
+        if (id == null || id == "null") {
             return null
         }
         return memoDao.getMemo(id).toDomain()

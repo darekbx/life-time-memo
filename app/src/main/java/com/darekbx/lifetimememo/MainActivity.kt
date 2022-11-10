@@ -6,7 +6,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -28,32 +27,6 @@ import dagger.hilt.android.AndroidEntryPoint
  *  - encrypted db?
  *  - tree view is displaying node name and year (or month if timestamp < one year)
  *  - single memo can display a map in a dialog if localization is conncted
-
- *
- * Navigation:
- *  - Login (first page)
- *  - Memos tree
- *  - Memo{id}
- *  - Settings
- *
- * Memos:
- *  - Programming
- *    - Companies
- *      - companyA
- *        - projects
- *        - people
- *    - My Projects
- *    - Technologies
- *  - Cars
- *  - Bikes
- *  - People
- *    - School
- *    - Preschool
- *  - Secrets
- *  - Schools
- *  - Places in the world I visited
- *  - ...
- *
  */
 
 @AndroidEntryPoint

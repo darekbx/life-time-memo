@@ -2,6 +2,7 @@
 
 package com.darekbx.lifetimememo.screens.memo.ui
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,21 +20,7 @@ import com.darekbx.lifetimememo.commonui.SaveIcon
 import com.darekbx.lifetimememo.commonui.theme.Paddings
 import com.darekbx.lifetimememo.screens.category.model.Category
 import com.darekbx.lifetimememo.screens.category.viewmodel.CategoryViewModel
-import com.darekbx.lifetimememo.screens.memos.model.Memo
 import com.darekbx.lifetimememo.screens.memos.viewmodel.MemosViewModel
-/*
-class MutableMemoState {
-
-    var title = mutableStateOf("")
-    var titleValid = mutableStateOf(true) }
-    var subtitle = mutableStateOf("") }
-    var description = mutableStateOf("") }
-    var link by remember { mutableStateOf("") }
-    var categoryId by remember { mutableStateOf("") }
-    var categoryValid by remember { mutableStateOf(true) }
-    var important by remember { mutableStateOf(false) }
-    var sticked by remember { mutableStateOf(false) }
-}*/
 
 /**
  * @param memoId Id of the memo which should be loaded into view
@@ -46,31 +33,12 @@ fun MemoScreen(
     parentId: String? = null,
     onClose: () -> Unit
 ) {
-    var title by remember { mutableStateOf("") }
-    var titleValid by remember { mutableStateOf(true) }
-    var subtitle by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var link by remember { mutableStateOf("") }
-    var categoryId by remember { mutableStateOf("") }
-    var categoryValid by remember { mutableStateOf(true) }
-    var important by remember { mutableStateOf(false) }
-    var sticked by remember { mutableStateOf(false) }
-
+    val memoState = remember { MemoState() }
     val parentContainer = memosViewModel.getContainer(parentId).observeAsState()
 
     LaunchedEffect(memoId) {
         memosViewModel.getMemo(memoId)?.let { loadedMemo ->
-            title = loadedMemo.title
-            loadedMemo.subtitle?.let { subtitle = it }
-            loadedMemo.description?.let { description = it }
-            loadedMemo.link?.let { link = it }
-            loadedMemo.flag?.let { memoFlag ->
-                when (memoFlag) {
-                    Memo.Flag.STICKED.value -> sticked = true
-                    Memo.Flag.IMPORTANT.value -> important = true
-                }
-            }
-            categoryId = loadedMemo.categoryUid
+            memoState.loadState(loadedMemo)
         }
     }
 
@@ -81,34 +49,17 @@ fun MemoScreen(
                 actions = {
                     IconButton(onClick = { onClose() }) { CancelIcon() }
                     IconButton(onClick = {
-                        titleValid = true
-                        categoryValid = true
-                        if (title.isBlank()) {
-                            titleValid = false
-                        } else if (categoryId.isEmpty()) {
-                            categoryValid = false
+                        memoState.titleValid = true
+                        memoState.categoryValid = true
+                        if (memoState.title.isBlank()) {
+                            memoState.titleValid = false
+                        } else if (memoState.categoryId.isEmpty()) {
+                            memoState.categoryValid = false
                         } else {
-                            memoId?.let {
-                                memosViewModel.update(
-                                    memoId,
-                                    title,
-                                    subtitle,
-                                    description,
-                                    categoryId,
-                                    computeFlag(important, sticked),
-                                    link
-                                )
-                            } ?: run {
-                                memosViewModel.add(
-                                    title,
-                                    subtitle,
-                                    description,
-                                    categoryId,
-                                    computeFlag(important, sticked),
-                                    link,
-                                    parentId = parentId
-                                )
-                            }
+                            memoId
+                                ?.takeIf { it != "null" }
+                                ?.let { memoState.update(memoId, memosViewModel) }
+                                ?: run { memoState.add(parentId, memosViewModel) }
                             onClose()
                         }
                     }) { SaveIcon() }
@@ -130,29 +81,14 @@ fun MemoScreen(
                         fontWeight = FontWeight.Bold
                     )
                 }
-                TitleField(title, titleValid) { title = it }
-                SubtitleField(subtitle) { subtitle = it }
-                DescriptionField(description) { description = it }
-                LinkField(link) { link = it }
-                CategorySelection(categoryValid = categoryValid, selectedId = categoryId) { category ->
-                    categoryId = category.uid
+                with(memoState) {
+                    TitleField(title, titleValid) { title = it }
+                    SubtitleField(subtitle) { subtitle = it }
+                    DescriptionField(description) { description = it }
+                    LinkField(link) { link = it }
+                    CategorySelection(memoState = memoState)
+                    FlagsRow(memoState)
                 }
-                FlagsRow(
-                    important,
-                    sticked,
-                    importantChanged = {
-                        important = it
-                        if (important) {
-                            sticked = false
-                        }
-                    },
-                    stickedChanged = {
-                        sticked = it
-                        if (sticked) {
-                            important = false
-                        }
-                    }
-                )
 
                 Text(
                     modifier = Modifier.padding(16.dp),
@@ -163,21 +99,8 @@ fun MemoScreen(
     )
 }
 
-private fun computeFlag(important: Boolean, sticked: Boolean): Int? {
-    return when {
-        important -> Memo.Flag.IMPORTANT.value
-        sticked -> Memo.Flag.STICKED.value
-        else -> null
-    }
-}
-
 @Composable
-private fun FlagsRow(
-    isImportant: Boolean,
-    isSticked: Boolean,
-    importantChanged: (Boolean) -> Unit,
-    stickedChanged: (Boolean) -> Unit
-) {
+private fun FlagsRow(memoState: MemoState) {
     Row(
         modifier = Modifier.padding(start = 4.dp, top = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -188,14 +111,24 @@ private fun FlagsRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
-            Checkbox(checked = isImportant, onCheckedChange = importantChanged)
+            Checkbox(checked = memoState.important, onCheckedChange = {
+                memoState.important = it
+                if (memoState.important) {
+                    memoState.sticked = false
+                }
+            })
             Text(text = "Important")
         }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
-            Checkbox(checked = isSticked, onCheckedChange = stickedChanged)
+            Checkbox(checked = memoState.sticked, onCheckedChange = {
+                memoState.sticked = it
+                if (memoState.sticked) {
+                    memoState.important = false
+                }
+            })
             Text(text = "Sticked")
         }
     }
@@ -271,20 +204,18 @@ private fun Modifier.inputPadding() =
 @Composable
 fun CategorySelection(
     categoryViewModel: CategoryViewModel = hiltViewModel(),
-    categoryValid: Boolean,
-    selectedId: String?,
-    selectedCategory: (Category) -> Unit = { }
+    memoState: MemoState
 ) {
     val categories by categoryViewModel.categories.observeAsState()
     val text = remember { mutableStateOf("") }
     val isOpen = remember { mutableStateOf(false) }
 
     if (categories != null) {
-        selectedId?.let { selectedCategoryId ->
+        memoState.categoryId.takeIf { it.isNotEmpty() }?.let { selectedCategoryId ->
             val activeCategory = categories?.firstOrNull { it.uid == selectedCategoryId }
             if (activeCategory != null) {
                 text.value = activeCategory.name
-                selectedCategory(activeCategory)
+                memoState.categoryId = activeCategory.uid
             }
         }
     }
@@ -294,7 +225,7 @@ fun CategorySelection(
             Column {
                 OutlinedTextField(
                     value = text.value,
-                    isError = !categoryValid,
+                    isError = !memoState.categoryValid,
                     onValueChange = { text.value = it },
                     label = { Text(text = "Category") },
                     modifier = Modifier.fillMaxWidth()
@@ -305,7 +236,7 @@ fun CategorySelection(
                     request = { isOpen.value = it },
                     selectedCategory = {
                         text.value = it.name
-                        selectedCategory(it)
+                        memoState.categoryId = it.uid
                     }
                 )
             }

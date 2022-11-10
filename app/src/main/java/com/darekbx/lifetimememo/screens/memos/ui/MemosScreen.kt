@@ -126,8 +126,6 @@ private fun ActionButtons(
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.End
     ) {
-        Text(text = "TODO: ability to edit memo")
-
         ExtendedFloatingActionButton(
             onClick = { onAddMemoClick(parentId) },
             icon = { Icon(imageVector = Icons.Default.Add, contentDescription = "Add") },

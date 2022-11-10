@@ -26,7 +26,7 @@ class Memo(
     var hasLocation = false
     var hasDescription = description != null && description.isNotBlank()
     var hasSubtitle = subtitle != null && subtitle.isNotBlank()
-    var hasLink = link != null
+    var hasLink = link != null && link.isNotBlank()
 
     companion object {
         fun MemoDto.toDomain() = Memo(
