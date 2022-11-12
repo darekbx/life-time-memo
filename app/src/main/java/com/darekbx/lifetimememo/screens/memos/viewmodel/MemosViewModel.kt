@@ -26,7 +26,7 @@ class MemosViewModel @Inject constructor(
     }
 
     fun getContainer(parentId: String?): LiveData<Container> {
-        if (parentId != null && parentId.isNotBlank() && parentId != "null") {
+        if (parentId != null) {
             return memosRepository.getContainer(parentId).asLiveData()
         } else {
             return liveData { }

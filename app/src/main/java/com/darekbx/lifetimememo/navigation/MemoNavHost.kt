@@ -11,6 +11,7 @@ import com.darekbx.lifetimememo.screens.container.ui.ContainerScreen
 import com.darekbx.lifetimememo.screens.login.ui.LoginScreen
 import com.darekbx.lifetimememo.screens.memo.ui.MemoScreen
 import com.darekbx.lifetimememo.screens.memos.ui.MemosScreen
+import com.darekbx.lifetimememo.screens.search.ui.SearchScreen
 import com.darekbx.lifetimememo.screens.settings.ui.SettingsScreen
 
 @Composable
@@ -26,11 +27,15 @@ fun MemoNavHost(
         composable(route = LogIn.route) {
             LoginScreen(
                 authorized = {
-                    navController.navigate("${Memos.rawRoute}/null") {
+                    navController.navigate(Memos.route) {
                         popUpTo(0 /* clear root */)
                     }
                 }
             )
+        }
+
+        composable(route = Search.route) {
+            SearchScreen()
         }
 
         composable(
@@ -38,13 +43,27 @@ fun MemoNavHost(
             arguments = Memos.arguments
         ) { navBackStackEntry ->
             val parentId = navBackStackEntry.arguments?.getString(Memos.parentIdArg)
-            MemosScreen(
-                parentId = parentId,
-                onMemoClick = { memoId -> navController.navigateSingleTopTo("${Memo.route}/$memoId/null") },
-                onContainerClick = { containerId -> navController.navigate("${Memos.rawRoute}/$containerId") },
-                onAddMemoClick = { id -> navController.navigate("${Memo.route}/null/$id") },
-                onAddContainerClick = { id -> navController.navigate("${Container.route}/$id") }
-            )
+            with(navController) {
+                MemosScreen(
+                    parentId = parentId,
+                    onMemoClick = { memoId -> navigateSingleTopTo("${Memo.route}?${Memo.memoIdArg}=$memoId") },
+                    onContainerClick = { containerId -> navigate("${Memos.route}?${Memos.parentIdArg}=$containerId") },
+                    onAddMemoClick = { parentId ->
+                        if (parentId == null) {
+                            navigate(Memo.route)
+                        } else {
+                            navigate("${Memo.route}?${Memo.parentIdArg}=$parentId")
+                        }
+                    },
+                    onAddContainerClick = { parentId ->
+                        if (parentId == null) {
+                            navigate(Container.route)
+                        } else {
+                            navigate(Container.parentIdRouteFormat.format(parentId))
+                        }
+                    }
+                )
+            }
         }
 
         composable(route = Settings.route) {

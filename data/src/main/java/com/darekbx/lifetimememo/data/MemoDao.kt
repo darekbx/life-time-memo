@@ -22,6 +22,9 @@ interface MemoDao {
     @Query("SELECT * FROM memo WHERE container_uid = :containerId")
     fun memos(containerId: String?): Flow<List<MemoDto>>
 
+    @Query("SELECT * FROM memo WHERE container_uid IS NULL")
+    fun memos(): Flow<List<MemoDto>>
+
     @Query("SELECT * FROM container WHERE parent_uid IS NULL")
     fun containers(): Flow<List<ContainerDto>>
 

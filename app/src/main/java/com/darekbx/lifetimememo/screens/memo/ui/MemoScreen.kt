@@ -2,7 +2,6 @@
 
 package com.darekbx.lifetimememo.screens.memo.ui
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -57,7 +56,6 @@ fun MemoScreen(
                             memoState.categoryValid = false
                         } else {
                             memoId
-                                ?.takeIf { it != "null" }
                                 ?.let { memoState.update(memoId, memosViewModel) }
                                 ?: run { memoState.add(parentId, memosViewModel) }
                             onClose()

@@ -3,6 +3,7 @@ package com.darekbx.lifetimememo.screens.memos.repository
 import com.darekbx.lifetimememo.data.MemoDao
 import com.darekbx.lifetimememo.data.dto.ContainerDto
 import com.darekbx.lifetimememo.data.dto.MemoDto
+import com.darekbx.lifetimememo.navigation.Memos
 import com.darekbx.lifetimememo.screens.memos.model.Container
 import com.darekbx.lifetimememo.screens.memos.model.Container.Companion.toDomain
 import com.darekbx.lifetimememo.screens.memos.model.Memo
@@ -23,7 +24,7 @@ class MemosRepository @Inject constructor(
         parentId: String?,
         path: MutableList<String> = mutableListOf()
     ): MutableList<String> {
-        if (parentId != null && parentId != "null") {
+        if (parentId != null) {
             val container = memoDao.containerSync(parentId)
             if (container != null) {
                 path.add(container.title)
@@ -38,15 +39,17 @@ class MemosRepository @Inject constructor(
     }
 
     suspend fun getMemo(id: String?): Memo? {
-        if (id == null || id == "null") {
+        if (id == null) {
             return null
         }
         return memoDao.getMemo(id).toDomain()
     }
 
     fun elements(containerId: String?): Flow<List<Any>> {
-        val memosSource = memoDao
-            .memos(containerId)
+        val memosSource = when (containerId) {
+            null -> memoDao.memos()
+            else -> memoDao.memos(containerId)
+        }
             .map { memoDtos ->
                 memoDtos.map {
                     val memo = it.toDomain()

@@ -13,14 +13,22 @@ object LogIn : MemoDestination {
     override val label = "Login"
 }
 
+object Search : MemoDestination {
+    override val route = "search"
+    override val label = "Search"
+}
+
 object Memos : MemoDestination {
-    override val route = "memos/null"
+    override val route = "memos"
     override val label = "Memos"
-    const val rawRoute = "memos"
     const val parentIdArg = "parent_id"
-    const val routeWithArgs = "$rawRoute/{${parentIdArg}}"
+    val routeWithArgs = "$route?$parentIdArg={${parentIdArg}}"
     val arguments = listOf(
-        navArgument(parentIdArg) { type = NavType.StringType }
+        navArgument(parentIdArg) {
+            nullable = true
+            defaultValue = null
+            type = NavType.StringType
+        }
     )
 }
 
@@ -39,10 +47,18 @@ object Memo : MemoDestination {
     override val label = "Memo"
     const val memoIdArg = "memo_id"
     const val parentIdArg = "parent_id"
-    val routeWithArgs = "${route}/{$memoIdArg}/{$parentIdArg}"
+    val routeWithArgs = "${route}?$memoIdArg={$memoIdArg}&$parentIdArg={$parentIdArg}"
     val arguments = listOf(
-        navArgument(memoIdArg) { type = NavType.StringType },
-        navArgument(parentIdArg) { type = NavType.StringType }
+        navArgument(memoIdArg) {
+            nullable = true
+            defaultValue = null
+            type = NavType.StringType
+        },
+        navArgument(parentIdArg) {
+            nullable = true
+            defaultValue = null
+            type = NavType.StringType
+        }
     )
 }
 
@@ -50,10 +66,14 @@ object Container : MemoDestination {
     override val route = "container"
     override val label = "Container"
     const val parentIdArg = "parent_id"
-    val routeWithArgs = "${route}/{$parentIdArg}"
+    val routeWithArgs = "$route?$parentIdArg={$parentIdArg}"
+    val parentIdRouteFormat = "$route?parent_id=%s"
     val arguments = listOf(
-        navArgument(parentIdArg) { type = NavType.StringType }
+        navArgument(parentIdArg) {
+            nullable = true
+            type = NavType.StringType
+        }
     )
 }
 
-val appTabRowScreens = listOf(Memos, Settings)
+val appTabRowScreens = listOf(Memos, Search, Settings)
