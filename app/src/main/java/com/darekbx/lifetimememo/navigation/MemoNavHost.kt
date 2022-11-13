@@ -13,6 +13,7 @@ import com.darekbx.lifetimememo.screens.memo.ui.MemoScreen
 import com.darekbx.lifetimememo.screens.memos.ui.MemosScreen
 import com.darekbx.lifetimememo.screens.search.ui.SearchScreen
 import com.darekbx.lifetimememo.screens.settings.ui.SettingsScreen
+import com.darekbx.lifetimememo.screens.statistics.ui.StatisticsScreen
 
 @Composable
 fun MemoNavHost(
@@ -36,6 +37,10 @@ fun MemoNavHost(
 
         composable(route = Search.route) {
             SearchScreen()
+        }
+
+        composable(route = Statistics.route) {
+            StatisticsScreen()
         }
 
         composable(

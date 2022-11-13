@@ -55,17 +55,8 @@ class MemosViewModel @Inject constructor(
             _uiState.value = MemosUiState.InProgress
             val memo = memosRepository.getMemo(memoId) ?: return@launch
             memosRepository.update(
-                Memo(
-                    memo.uid,
-                    memo.parentUid,
-                    title,
-                    memo.timestamp,
-                    categoryId,
-                    shortInfo,
-                    description,
-                    link,
-                    flag = flag
-                )
+                Memo(memo.uid, memo.parentUid, title, memo.timestamp,
+                    categoryId, shortInfo, description, link, flag = flag)
             )
         }
     }
@@ -120,15 +111,10 @@ class MemosViewModel @Inject constructor(
             memosRepository.delete(container)
         }
     }
+
     fun delete(memo: Memo) {
         viewModelScope.launch {
             memosRepository.delete(memo)
         }
-    }
-
-    private suspend fun withProgress(block: suspend () -> Unit) {
-        _uiState.value = MemosUiState.InProgress
-        block()
-        _uiState.value = MemosUiState.Done
     }
 }

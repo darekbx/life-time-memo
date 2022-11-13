@@ -19,6 +19,12 @@ interface MemoDao {
         """)
     fun categories(): Flow<List<ExtendedCategoryDto>>
 
+    @Query("SELECT COUNT(uid) FROM memo")
+    fun countMemos(): Flow<Int>
+
+    @Query("SELECT COUNT(uid) FROM container")
+    fun countContainers(): Flow<Int>
+
     @Query("SELECT * FROM memo WHERE container_uid = :containerId")
     fun memos(containerId: String?): Flow<List<MemoDto>>
 

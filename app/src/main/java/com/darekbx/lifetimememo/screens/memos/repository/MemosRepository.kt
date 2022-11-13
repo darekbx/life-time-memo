@@ -3,7 +3,6 @@ package com.darekbx.lifetimememo.screens.memos.repository
 import com.darekbx.lifetimememo.data.MemoDao
 import com.darekbx.lifetimememo.data.dto.ContainerDto
 import com.darekbx.lifetimememo.data.dto.MemoDto
-import com.darekbx.lifetimememo.navigation.Memos
 import com.darekbx.lifetimememo.screens.memos.model.Container
 import com.darekbx.lifetimememo.screens.memos.model.Container.Companion.toDomain
 import com.darekbx.lifetimememo.screens.memos.model.Memo
@@ -11,7 +10,6 @@ import com.darekbx.lifetimememo.screens.memos.model.Memo.Companion.toDomain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -19,6 +17,10 @@ import javax.inject.Inject
 class MemosRepository @Inject constructor(
     private val memoDao: MemoDao
 ) {
+
+    fun countMemos(): Flow<Int> = memoDao.countMemos()
+
+    fun countContainers(): Flow<Int> = memoDao.countContainers()
 
     suspend fun getPath(
         parentId: String?,

@@ -18,6 +18,11 @@ object Search : MemoDestination {
     override val label = "Search"
 }
 
+object Statistics : MemoDestination {
+    override val route = "statistics"
+    override val label = "Statistics"
+}
+
 object Memos : MemoDestination {
     override val route = "memos"
     override val label = "Memos"
@@ -76,4 +81,4 @@ object Container : MemoDestination {
     )
 }
 
-val appTabRowScreens = listOf(Memos, Search, Settings)
+val appTabRowScreens = listOf(Memos, Search, Statistics, Settings)
