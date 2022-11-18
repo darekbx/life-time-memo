@@ -36,7 +36,11 @@ fun MemoNavHost(
         }
 
         composable(route = Search.route) {
-            SearchScreen()
+            with(navController) {
+                SearchScreen(onMemoClick = { memoId -> navigateSingleTopTo("${Memo.route}?${Memo.memoIdArg}=$memoId") },
+                    onContainerClick = { containerId -> navigate("${Memos.route}?${Memos.parentIdArg}=$containerId") }
+                )
+            }
         }
 
         composable(route = Statistics.route) {

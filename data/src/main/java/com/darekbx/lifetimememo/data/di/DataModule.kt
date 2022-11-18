@@ -2,8 +2,10 @@ package com.darekbx.lifetimememo.data.di
 
 import android.content.Context
 import androidx.room.Room
+import com.darekbx.lifetimememo.data.BackupDao
 import com.darekbx.lifetimememo.data.MemoDao
 import com.darekbx.lifetimememo.data.MemoDatabase
+import com.darekbx.lifetimememo.data.SearchDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,8 +17,18 @@ import dagger.hilt.components.SingletonComponent
 class WorkoutsModule {
 
     @Provides
-    fun provideDao(database: MemoDatabase): MemoDao {
+    fun provideMemoDao(database: MemoDatabase): MemoDao {
         return database.memoDao()
+    }
+
+    @Provides
+    fun provideSearchDao(database: MemoDatabase): SearchDao {
+        return database.searchDao()
+    }
+
+    @Provides
+    fun provideBackupDao(database: MemoDatabase): BackupDao {
+        return database.backupDao()
     }
 
     @Provides

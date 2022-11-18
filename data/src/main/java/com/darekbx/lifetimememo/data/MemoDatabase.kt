@@ -21,6 +21,10 @@ abstract class MemoDatabase : RoomDatabase() {
 
     abstract fun memoDao(): MemoDao
 
+    abstract fun searchDao(): SearchDao
+
+    abstract fun backupDao(): BackupDao
+
     companion object {
         val DB_NAME = "memo_db"
     }

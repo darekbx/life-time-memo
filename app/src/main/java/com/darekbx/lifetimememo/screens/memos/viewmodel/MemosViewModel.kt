@@ -3,6 +3,7 @@ package com.darekbx.lifetimememo.screens.memos.viewmodel
 import androidx.lifecycle.*
 import com.darekbx.lifetimememo.screens.memos.MemosUiState
 import com.darekbx.lifetimememo.screens.memos.model.Container
+import com.darekbx.lifetimememo.screens.memos.model.Location
 import com.darekbx.lifetimememo.screens.memos.model.Memo
 import com.darekbx.lifetimememo.screens.memos.repository.MemosRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,6 +29,14 @@ class MemosViewModel @Inject constructor(
     fun getContainer(parentId: String?): LiveData<Container> {
         if (parentId != null) {
             return memosRepository.getContainer(parentId).asLiveData()
+        } else {
+            return liveData { }
+        }
+    }
+
+    fun getLocation(memoId: String?): LiveData<Location?> {
+        if (memoId != null) {
+            return memosRepository.getLocation(memoId).asLiveData()
         } else {
             return liveData { }
         }
@@ -61,6 +70,18 @@ class MemosViewModel @Inject constructor(
         }
     }
 
+    fun addLocation(memoId: String, lat: Double, lng: Double) {
+        viewModelScope.launch {
+            memosRepository.add(Location(UUID.randomUUID().toString(),memoId, lat, lng))
+        }
+    }
+
+    fun updateLocation(memoId: String, lat: Double, lng: Double) {
+        viewModelScope.launch {
+            memosRepository.update(memoId, lat, lng)
+        }
+    }
+
     fun add(
         title: String,
         shortInfo: String,
@@ -69,12 +90,13 @@ class MemosViewModel @Inject constructor(
         flag: Int?,
         link: String? = null,
         parentId: String? = null
-    ) {
+    ): String {
+        val newRowUid = UUID.randomUUID().toString()
         viewModelScope.launch {
             _uiState.value = MemosUiState.InProgress
             memosRepository.add(
                 Memo(
-                    UUID.randomUUID().toString(),
+                    newRowUid,
                     parentId,
                     title,
                     System.currentTimeMillis(),
@@ -86,6 +108,7 @@ class MemosViewModel @Inject constructor(
                 )
             )
         }
+        return newRowUid
     }
 
     fun add(

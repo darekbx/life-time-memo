@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.onKeyEvent
@@ -25,18 +26,21 @@ import com.darekbx.lifetimememo.screens.search.viewmodel.SearchViewModel
 
 @Composable
 fun SearchScreen(
-    searchViewModel: SearchViewModel = hiltViewModel()
+    searchViewModel: SearchViewModel = hiltViewModel(),
+    onMemoClick: (id: String?) -> Unit,
+    onContainerClick: (id: String?) -> Unit
 ) {
-    val elements = emptyList<Any>() // TODO
+    val filterState = remember { mutableStateOf("") }
+    val elements by searchViewModel.searchInElements(filterState.value).observeAsState()
 
     Column {
         SerachBox { query ->
-            // TODO
+            filterState.value = query
         }
         ElementsList(
-            elements,
-            onContainerClick = { },
-            onMemoClick = { }
+            elements ?: emptyList(),
+            onContainerClick,
+            onMemoClick
         )
     }
 }

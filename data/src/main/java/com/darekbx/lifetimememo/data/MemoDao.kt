@@ -37,6 +37,9 @@ interface MemoDao {
     @Query("SELECT * FROM container WHERE uid = :parentId")
     fun container(parentId: String): Flow<ContainerDto>
 
+    @Query("SELECT * FROM location WHERE memo_id = :memoId")
+    fun location(memoId: String): Flow<LocationDto?>
+
     @Query("SELECT * FROM container WHERE uid = :parentId")
     suspend fun containerSync(parentId: String): ContainerDto?
 
@@ -69,6 +72,9 @@ interface MemoDao {
 
     @Query("DELETE FROM memo WHERE uid = :uid")
     suspend fun deleteMemo(uid: String)
+
+    @Query("UPDATE location SET latitude = :lat, longitude = :lng WHERE memo_id = :memoId")
+    fun updateLocation(memoId: String, lat: Double, lng: Double)
 
     @Insert
     fun add(locationDto: LocationDto): Long

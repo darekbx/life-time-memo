@@ -20,6 +20,7 @@ import com.darekbx.lifetimememo.commonui.theme.Paddings
 import com.darekbx.lifetimememo.screens.category.model.Category
 import com.darekbx.lifetimememo.screens.category.viewmodel.CategoryViewModel
 import com.darekbx.lifetimememo.screens.memos.viewmodel.MemosViewModel
+import org.osmdroid.util.GeoPoint
 
 /**
  * @param memoId Id of the memo which should be loaded into view
@@ -32,14 +33,18 @@ fun MemoScreen(
     parentId: String? = null,
     onClose: () -> Unit
 ) {
+    val memoLocation = memosViewModel.getLocation(memoId).observeAsState()
     val memoState = remember { MemoState() }
-    val parentContainer = memosViewModel.getContainer(parentId).observeAsState()
 
     LaunchedEffect(memoId) {
         memosViewModel.getMemo(memoId)?.let { loadedMemo ->
             memoState.loadState(loadedMemo)
         }
     }
+
+    val parentContainer = memosViewModel
+        .getContainer(parentId ?: memoState.parentId)
+        .observeAsState()
 
     Scaffold(
         topBar = {
@@ -65,36 +70,82 @@ fun MemoScreen(
             )
         },
         content = { padding ->
-            Column(
-                Modifier
-                    .padding(padding)
-                    .padding(top = 8.dp)
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.Top
-            ) {
-                Row(modifier = Modifier.padding(start = 16.dp)) {
-                    Text(text = "Parent: ")
-                    Text(
-                        text = parentContainer.value?.title ?: "Root",
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                with(memoState) {
-                    TitleField(title, titleValid) { title = it }
-                    SubtitleField(subtitle) { subtitle = it }
-                    DescriptionField(description) { description = it }
-                    LinkField(link) { link = it }
-                    CategorySelection(memoState = memoState)
-                    FlagsRow(memoState)
+            var locationDialogVisible by remember { mutableStateOf(false) }
+            var location by remember { mutableStateOf<GeoPoint?>(null) }
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    Modifier
+                        .padding(padding)
+                        .padding(top = 8.dp)
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.Top
+                ) {
+                    Row(modifier = Modifier.padding(start = 16.dp)) {
+                        Text(text = "Parent: ")
+                        Text(
+                            text = parentContainer.value?.title ?: "Root",
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    with(memoState) {
+                        TitleField(title, titleValid) { title = it }
+                        CategorySelection(memoState = memoState)
+                        SubtitleField(subtitle) { subtitle = it }
+                        DescriptionField(description) { description = it }
+                        LinkField(link) { link = it }
+                        FlagsRow(memoState)
+                        LocationRow(
+                            memoState,
+                            onAddLocation = { locationDialogVisible = true },
+                            onOpenLocation = {
+                                memoLocation.value?.let {
+                                    location = GeoPoint(it.latitude, it.longitude)
+                                    locationDialogVisible = true
+                                }
+                            }
+                        )
+                    }
                 }
 
-                Text(
-                    modifier = Modifier.padding(16.dp),
-                    text = "TODO: location, datetime, reminder"
-                )
+                if (locationDialogVisible) {
+                    LocationView(location) { lat, lng ->
+                        memoState.lat = lat
+                        memoState.lng = lng
+                        locationDialogVisible = false
+                    }
+                }
             }
         }
     )
+}
+
+@Composable
+private fun LocationRow(
+    memoState: MemoState,
+    onAddLocation: () -> Unit = { },
+    onOpenLocation: () -> Unit = { }
+) {
+    if (memoState.hasLocation) {
+        Button(
+            modifier = Modifier
+                .inputPadding()
+                .fillMaxWidth(),
+            onClick = { onOpenLocation() }) {
+            Text(text = "Show location")
+        }
+    } else {
+        Button(
+            modifier = Modifier
+                .inputPadding()
+                .fillMaxWidth(),
+            onClick = { onAddLocation() }
+        ) {
+            val text =
+                if (memoState.lat == null) "Add location"
+                else "Location added"
+            Text(text = text)
+        }
+    }
 }
 
 @Composable
@@ -219,7 +270,7 @@ fun CategorySelection(
     }
 
     categories?.let { categoryList ->
-        Box(Modifier.inputPadding()) {
+        Box(Modifier.padding(start = Paddings.Big, end = Paddings.Big)) {
             Column {
                 OutlinedTextField(
                     value = text.value,

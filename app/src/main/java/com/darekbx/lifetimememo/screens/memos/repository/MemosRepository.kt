@@ -2,15 +2,19 @@ package com.darekbx.lifetimememo.screens.memos.repository
 
 import com.darekbx.lifetimememo.data.MemoDao
 import com.darekbx.lifetimememo.data.dto.ContainerDto
+import com.darekbx.lifetimememo.data.dto.LocationDto
 import com.darekbx.lifetimememo.data.dto.MemoDto
 import com.darekbx.lifetimememo.screens.memos.model.Container
 import com.darekbx.lifetimememo.screens.memos.model.Container.Companion.toDomain
+import com.darekbx.lifetimememo.screens.memos.model.Location
+import com.darekbx.lifetimememo.screens.memos.model.Location.Companion.toDomain
 import com.darekbx.lifetimememo.screens.memos.model.Memo
 import com.darekbx.lifetimememo.screens.memos.model.Memo.Companion.toDomain
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -40,11 +44,17 @@ class MemosRepository @Inject constructor(
         return memoDao.container(parentId).map { it.toDomain() }
     }
 
+    fun getLocation(memoId: String): Flow<Location?> {
+        return memoDao.location(memoId).mapNotNull { it?.toDomain() }
+    }
+
     suspend fun getMemo(id: String?): Memo? {
         if (id == null) {
             return null
         }
-        return memoDao.getMemo(id).toDomain()
+        val memo = memoDao.getMemo(id).toDomain()
+        memo.hasLocation = memoDao.countLocations(memo.uid) > 0
+        return memo
     }
 
     fun elements(containerId: String?): Flow<List<Any>> {
@@ -85,15 +95,28 @@ class MemosRepository @Inject constructor(
             memoDao.add(memo.mapToDto())
         }
     }
+
     suspend fun update(memo: Memo) {
         withContext(Dispatchers.IO) {
             memoDao.update(memo.mapToDto())
         }
     }
 
+    suspend fun update(memoId: String, lat: Double, lng: Double) {
+        withContext(Dispatchers.IO) {
+            memoDao.updateLocation(memoId, lat, lng)
+        }
+    }
+
     suspend fun add(container: Container) {
         withContext(Dispatchers.IO) {
             memoDao.add(container.mapToDto())
+        }
+    }
+
+    suspend fun add(location: Location) {
+        withContext(Dispatchers.IO) {
+            memoDao.add(location.mapToDto())
         }
     }
 
@@ -128,6 +151,15 @@ class MemosRepository @Inject constructor(
             title,
             subtitle,
             timestamp
+        )
+    }
+
+    private fun Location.mapToDto(): LocationDto {
+        return LocationDto(
+            this.uid,
+            memoId,
+            latitude,
+            longitude
         )
     }
 }

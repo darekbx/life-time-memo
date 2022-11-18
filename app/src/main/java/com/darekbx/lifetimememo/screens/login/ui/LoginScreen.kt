@@ -56,7 +56,11 @@ fun ContainerCard(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
-                    ChipMark(modifier = Modifier, text="${children.size} entries", colors = listOf(Color.White, OnSurface.copy(alpha = 0.5F)))
+                    ChipMark(
+                        modifier = Modifier,
+                        text = "${children.size} entries",
+                        colors = listOf(Color.White, OnSurface.copy(alpha = 0.5F))
+                    )
                 }
                 Text(
                     modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 4.dp),
@@ -110,10 +114,16 @@ fun CardItem(
                 }
                 Row {
                     if (withDescription) {
-                        ChipMark(text = "Description", colors = listOf(DarkGreen, Green.copy(alpha = 0.4f)))
+                        ChipMark(
+                            text = "Description",
+                            colors = listOf(DarkGreen, Green.copy(alpha = 0.4f))
+                        )
                     }
                     if (withLocation) {
-                        ChipMark(text = "Location", colors = listOf(DarkOrange, Orange.copy(alpha = 0.4f)))
+                        ChipMark(
+                            text = "Location",
+                            colors = listOf(DarkOrange, Orange.copy(alpha = 0.4f))
+                        )
                     }
                     if (withLink) {
                         ChipMark(text = "Link", colors = listOf(DarkBlue, Blue.copy(alpha = 0.4f)))
@@ -158,7 +168,11 @@ private fun WarningFlag() {
 }
 
 @Composable
-private fun ChipMark(modifier: Modifier = Modifier.padding(top = 8.dp), text: String, colors: List<Color>) {
+private fun ChipMark(
+    modifier: Modifier = Modifier.padding(top = 8.dp),
+    text: String,
+    colors: List<Color>
+) {
     Text(
         text = text, fontSize = 12.sp,
         color = colors[0],
@@ -182,7 +196,11 @@ fun DemoItem() {
     ) {
 
         ContainerCard(children = listOf(1, 2))
-        ContainerCard(title = "Mobica", subtitle = "Android developer 2018 - 2020", children = listOf(1, 2, 3, 4, 5, 6, 7, 8))
+        ContainerCard(
+            title = "Mobica",
+            subtitle = "Android developer 2018 - 2020",
+            children = listOf(1, 2, 3, 4, 5, 6, 7, 8)
+        )
         CardItem(false, false, true, false, emptyList())
         CardItem(true, true, false, true, listOf(1))
         CardItem(false, false, false, false, emptyList())

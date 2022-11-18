@@ -1,5 +1,6 @@
 package com.darekbx.lifetimememo.screens.settings.ui
 
+import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -16,13 +17,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.darekbx.lifetimememo.R
 import com.darekbx.lifetimememo.commonui.theme.Highlight
 import com.darekbx.lifetimememo.commonui.theme.Paddings
+import com.darekbx.lifetimememo.screens.settings.viewmodel.SettingsViewModel
 
 @Preview(
     showBackground = true,
@@ -32,19 +36,27 @@ import com.darekbx.lifetimememo.commonui.theme.Paddings
 )
 @Composable
 fun SettingsScreen(
-    openCategories: () -> Unit = { },
-    openBackupRestore: () -> Unit = { },
+    settingsViewModel: SettingsViewModel = hiltViewModel(),
+    openCategories: () -> Unit = { }
 ) {
+    val context = LocalContext.current
+
     Column(Modifier.padding(Paddings.Default)) {
         SettingsRow(icon = painterResource(R.drawable.ic_category), title = "Categories") {
             openCategories()
         }
         SettingsRow(
-            modifier = Modifier.alpha(0.5F) /* mark as disabled*/,
-            icon = painterResource(R.drawable.ic_settings_backup_restore),
-            title = "Backup/Restore"
+            icon = painterResource(R.drawable.ic_backup),
+            title = "Backup data"
         ) {
-            openBackupRestore()
+            settingsViewModel.makeBackup(context)
+        }
+        SettingsRow(
+            modifier = Modifier.alpha(0.5F) /* mark as disabled*/,
+            icon = painterResource(R.drawable.ic_settings_restore),
+            title = "Restore data"
+        ) {
+            // TODO
         }
     }
 }

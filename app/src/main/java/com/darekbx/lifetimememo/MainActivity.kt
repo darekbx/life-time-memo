@@ -3,6 +3,7 @@
 package com.darekbx.lifetimememo
 
 import android.os.Bundle
+import android.preference.PreferenceManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -17,6 +18,7 @@ import com.darekbx.lifetimememo.navigation.*
 import com.darekbx.lifetimememo.commonui.MemosBottomNavigation
 import com.darekbx.lifetimememo.commonui.theme.LifeTimeMemoTheme
 import dagger.hilt.android.AndroidEntryPoint
+import org.osmdroid.config.Configuration
 
 /**
  * Life Time Memo
@@ -33,6 +35,12 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        Configuration.getInstance().load(
+            applicationContext,
+            applicationContext.getSharedPreferences("maps", MODE_PRIVATE)
+        )
+
         setContent {
             LifeTimeMemoTheme {
                 MemoApp()
